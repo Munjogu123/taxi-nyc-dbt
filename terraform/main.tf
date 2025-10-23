@@ -52,6 +52,45 @@ resource "aws_subnet" "public_subnet_3" {
   }
 }
 
+# create an internet gateway
+resource "aws_internet_gateway" "igw" {
+  vpc_id = aws_vpc.taxi_vpc.id
+
+  tags = {
+    Name = "taxi-igw"
+  }
+}
+
+# create route table
+resource "aws_route_table" "public_route" {
+  vpc_id = aws_vpc.taxi_vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.igw.id
+  }
+
+  tags = {
+    Name = "public-rt"
+  }
+}
+
+# route table association
+resource "aws_route_table_association" "subnet_1" {
+  subnet_id      = aws_subnet.public_subnet_1.id
+  route_table_id = aws_route_table.public_route.id
+}
+
+resource "aws_route_table_association" "subnet_2" {
+  subnet_id      = aws_subnet.public_subnet_2.id
+  route_table_id = aws_route_table.public_route.id
+}
+
+resource "aws_route_table_association" "subnet_3" {
+  subnet_id      = aws_subnet.public_subnet_3.id
+  route_table_id = aws_route_table.public_route.id
+}
+
 # create a security group
 resource "aws_security_group" "taxi_sg" {
   name        = "taxisg"
@@ -147,11 +186,12 @@ resource "aws_redshiftserverless_namespace" "kestra_namespace" {
 
 # create a redshift serverless workgroup
 resource "aws_redshiftserverless_workgroup" "kestra_workgroup" {
-  workgroup_name     = "kestra-workgroup-123"
-  namespace_name     = aws_redshiftserverless_namespace.kestra_namespace.namespace_name
-  base_capacity      = 8
-  subnet_ids         = [aws_subnet.public_subnet_1.id, aws_subnet.public_subnet_2.id, aws_subnet.public_subnet_3.id]
-  security_group_ids = [aws_security_group.taxi_sg.id]
+  workgroup_name      = "kestra-workgroup-123"
+  namespace_name      = aws_redshiftserverless_namespace.kestra_namespace.namespace_name
+  base_capacity       = 8
+  subnet_ids          = [aws_subnet.public_subnet_1.id, aws_subnet.public_subnet_2.id, aws_subnet.public_subnet_3.id]
+  security_group_ids  = [aws_security_group.taxi_sg.id]
+  publicly_accessible = true
 
   tags = {
     Name = "redshift-workgroup"
