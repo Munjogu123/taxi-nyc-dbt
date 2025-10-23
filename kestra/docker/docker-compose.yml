@@ -1,0 +1,66 @@
+volumes:
+  postgres-data:
+    driver: local
+  kestra-data:
+    driver: local
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: docker-postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+
+  kestra:
+    image: kestra/kestra:${KESTRA_VERSION}
+    container_name: docker-kestra
+    user: "root"
+    command: server standalone
+    volumes:
+      - kestra-data:${KESTRA_STORAGE_PATH}
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/kestra-wd:/tmp/kestra-wd
+    environment:
+      KESTRA_CONFIGURATION: |
+        datasources:
+          postgres:
+            url: jdbc:postgresql://postgres:${POSTGRES_PORT}/${POSTGRES_DB}
+            driverClassName: org.postgresql.Driver
+            username: ${POSTGRES_USER}
+            password: ${POSTGRES_PASSWORD}
+        kestra:
+          server:
+            basicAuth:
+              enabled: false
+              username: "${KESTRA_ADMIN_EMAIL}" # must be a valid email
+              password: ${KESTRA_ADMIN_PASSWORD}
+          repository:
+            type: postgres
+          storage:
+            type: local
+            local:
+              basePath: "${KESTRA_STORAGE_PATH}"
+          queue:
+            type: postgres
+          tasks:
+            tmpDir:
+              path: ${KESTRA_TMP_PATH}
+          url: http://localhost:${KESTRA_HTTP_PORT}/
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN}
+    ports:
+      - "${KESTRA_HTTP_PORT}:8080"
+      - "${KESTRA_UI_PORT}:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
