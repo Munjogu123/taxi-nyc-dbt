@@ -1,0 +1,42 @@
+id: dbt-redshift
+namespace: nyc-taxi-pipeline
+
+tasks:
+  - id: sync
+    type: io.kestra.plugin.git.SyncNamespaceFiles
+    url: https://github.com/Munjogu123/taxi-nyc-dbt
+    branch: main
+    namespace: "{{flow.namespace}}"
+    gitDirectory: taxi_dbt
+    dryRun: false
+
+  - id: dbt-build
+    type: io.kestra.plugin.dbt.cli.DbtCLI
+    env:
+      DBT_DATABASE: "dev"
+      DBT_SCHEMA: "public"
+    namespaceFiles:
+      enabled: true
+    containerImage: ghcr.io/kestra-io/dbt-redshift:latest
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+    storeManifest:
+      key: manifest.json
+      namespace: "{{flow.namespace}}"
+    profiles: |
+      taxi_dbt:
+        outputs:
+          dev:
+            type: redshift
+            host: {{ kv('REDSHIFT_HOST') }}
+            user: "{{ kv('REDSHIFT_USER') }}"
+            password: "{{ kv('REDSHIFT_PASSWORD') }}"
+            port: 5439
+            dbname: dev
+            schema: public
+            autocommit: true
+            threads: 3
+            connect_timeout: 300
+        target: dev
+    commands:
+      - dbt build
