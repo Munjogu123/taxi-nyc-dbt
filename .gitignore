@@ -6,3 +6,9 @@ terraform/terraform.tfstate
 
 # env files
 kestra/docker/.env
+
+# virtual environment
+.venv
+
+# dbt logs
+logs/
