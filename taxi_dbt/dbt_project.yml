@@ -38,6 +38,12 @@ models:
     marts:
       +schema: analytics
       +materialized: table
+  
+seeds:
+  taxi_dbt:
+    taxi_zone_lookup:
+      +column_types:
+        locationid: numeric
 
 on-run-start:
   - "{{ create_schema_if_not_exists() }}"
