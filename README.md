@@ -216,3 +216,8 @@ Contributions are welcome! Please:
 2. Create a feature branch
 3. Add tests
 4. Open a PR with clear description
+
+## 📝 Article
+
+Check out the full write-up on this project:
+[End-to-End Data Workflow: Kestra, Redshift, and dbt Integration](https://dev.to/fredmunjogu/end-to-end-data-workflow-kestra-redshift-and-dbt-integration-3ani)
