@@ -34,7 +34,7 @@ This projects implements an **end-to-end data pipeline** for ingesting, storing,
 
 ```mermaid
 graph TD
-    A[NYC TLC Website] --> B(Kestra Flow: Download Parquet)
+    A[NYC TLC Website] --> B(Kestra Flow: Download Parquet/CSV)
     B --> C(S3 Raw Bucket)
     C --> D(Kestra Flow: Copy to Redshift)
     D --> E[Redshift Raw Tables]
